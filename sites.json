@@ -1,0 +1,34 @@
+{
+  "Sites": [
+    {
+      "ID": "1",
+      "Nom": "OUJDA",
+      "DB": "OUJDA_CADASTRE",
+      "chemin_source": "D:\\FTP_CADASTERE\\oujda\\SOURCE",
+      "chemin_erreur": "D:\\FTP_CADASTERE\\oujda\\ERREUR",
+      "chemin_destination": "Z:\\oujda_CADASTERE\\oujda_CADASTERE-Partie5",
+      "chemin_archive_source": "D:\\FTP_CADASTERE\\ARCHIVE\\oujda\\SOURCE",
+      "chemin_archive_destination": "D:\\FTP_CADASTERE\\ARCHIVE\\oujda\\DESTINATION"
+    },
+    {
+      "ID": "2",
+      "Nom": "OUJDA ANGAD",
+      "DB": "OUJDA_ANGAD_CADASTRE",
+      "chemin_source": "D:\\FTP_CADASTERE\\Oujda-Angad\\SOURCE",
+      "chemin_erreur": "D:\\FTP_CADASTERE\\Oujda-Angad\\ERREUR",
+      "chemin_destination": "Z:\\OUJDA_ANGAD_CADASTRE\\OUJDA_ANGAD_CADASTRE-Partie3",
+      "chemin_archive_source": "D:\\FTP_CADASTERE\\ARCHIVE\\Oujda-Angad\\SOURCE",
+      "chemin_archive_destination": "D:\\FTP_CADASTERE\\ARCHIVE\\Oujda-Angad\\DESTINATION"
+    },
+    {
+      "ID": "3",
+      "Nom": "test",
+      "DB": "test_CADASTRE",
+      "chemin_source": "C:\\FTP_CADASTERE\\test\\SOURCE",
+      "chemin_erreur": "C:\\FTP_CADASTERE\\test\\ERREUR",
+      "chemin_destination": "C:\\test_CADASTRE\\test_CADASTRE-Partie3",
+      "chemin_archive_source": "C:\\FTP_CADASTERE\\ARCHIVE\\test\\SOURCE",
+      "chemin_archive_destination": "C:\\FTP_CADASTERE\\ARCHIVE\\test\\DESTINATION"
+    }
+  ]
+}

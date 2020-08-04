@@ -1,0 +1,25 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio Version 16
+VisualStudioVersion = 16.0.29509.3
+MinimumVisualStudioVersion = 10.0.40219.1
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Injection_Dossiers_CADASTRE", "Injection_Dossiers_CADASTRE.csproj", "{4F87623F-90A6-4896-9A94-52DC8AF5DC05}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
+		Release|Any CPU = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{4F87623F-90A6-4896-9A94-52DC8AF5DC05}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{4F87623F-90A6-4896-9A94-52DC8AF5DC05}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{4F87623F-90A6-4896-9A94-52DC8AF5DC05}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{4F87623F-90A6-4896-9A94-52DC8AF5DC05}.Release|Any CPU.Build.0 = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(ExtensibilityGlobals) = postSolution
+		SolutionGuid = {24D225D6-8035-4C3D-8406-2D84316F6073}
+	EndGlobalSection
+EndGlobal
