@@ -52,6 +52,11 @@ namespace Injection_Dossiers_CADASTRE
                 Site_Ancfcc = site.Name;
                 var CheminTranche = new DirectoryInfo(site.FullName);
                 var DossierScan = CheminTranche.GetDirectories();
+                if (DossierScan.Length == 0)
+                {
+                    ColorConsole.WriteLine("Aucun Dossier scan trouvé!",Color.Red);
+                    Environment.Exit(0);
+                }
                 foreach (var scan in DossierScan)
                 {
                     Scan_Ancfcc = scan.Name;
@@ -71,7 +76,7 @@ namespace Injection_Dossiers_CADASTRE
                         }
 
                         WriteLine(("Livrable : " + idlivrable));
-                        DirectoryInfo[] dossiers = root.GetDirectories();
+                        var dossiers = root.GetDirectories();
                         int idLastVue = 0;
                         idLastVue = getFirstIdOfPiece();
                         int countDossier = 0;
@@ -85,14 +90,14 @@ namespace Injection_Dossiers_CADASTRE
                             {
                                 if (verifierCarton(dossier.FullName))
                                 {
-                                    string[] indexes_name = dossier.Name.Split("_");
-                                    string user_scan = indexes_name[0];
-                                    string namedossier = (indexes_name[1] + ("_" + indexes_name[2]));
-                                    string date_scan = indexes_name[3];
+                                    var indexes_name = dossier.Name.Split("_");
+                                    var user_scan = indexes_name[0];
+                                    var namedossier = (indexes_name[1] + "_" + indexes_name[2]);
+                                    var date_scan = indexes_name[3];
                                     var livrableDossierRelPath = Path.Combine(site.Name, scan.Name);
                                     WriteLine(("Verification de l'existance du dossier : " + namedossier));
                                     int idDossier = verifierExistanceDuDossier(namedossier);
-                                    if ((idDossier != 0))
+                                    if (idDossier != 0)
                                     {
                                         WriteLine(("Dossier existant : ID dossier : " + idDossier));
                                         WriteLine("Verification de existance des pieces au niveau de la BD");
@@ -107,118 +112,20 @@ namespace Injection_Dossiers_CADASTRE
                                             WriteLine("Insertion des pieces");
                                             getPathAndBarCode(dossier.FullName, out var pathAndBarcode);
                                             insertPieces(idDossier, pathAndBarcode, namedossier);
-                                            var idAndBarcode = getIDandBarcodeofTF(idDossier);
-                                            var updateFolder = true;
-                                            for (int i = 0; i < pathAndBarcode.Count; i++)
-                                            {
-                                                //string id = Integer.toString(i);
-                                                var indexes = pathAndBarcode[i].Split(";");
-                                                var barcode = indexes[0];
-                                                var imageSource = indexes[1];
-                                                var id_vue = idAndBarcode[barcode];
-                                                if (!setodre(id_vue, idLastVue))
-                                                {
-                                                    updateFolder = false;
-                                                    break;
-                                                }
-
-                                                var imageDestination = Path.Combine(destination, namedossier, Path.ChangeExtension(imageSource,".tif"));
-                                                File.Copy(imageSource, imageDestination);
-                                                idLastVue = id_vue;
-                                            }
-
-                                            if (updateFolder)
-                                            {
-                                                ColorConsole.WriteLine("Mise à jour des pièces réussite", Color.Green);
-                                                WriteLine("Commencement d'archivage source ");
-                                                
-                                                if (deplacerCartonErreur(dossier.FullName, Path.Combine(cheminArchiveSource, livrableDossierRelPath)))
-                                                {
-                                                    ColorConsole.WriteLine("Archivage source réussie", Color.Green);
-                                                    WriteLine("Commencement d'archivage destination ");
-                                                    string cheminCartonDestination = Path.Combine(destination, namedossier);
-                                                    if (CopieCarton(cheminCartonDestination, Path.Combine(cheminArchiveDestination, livrableDossierRelPath)))
-                                                    {
-                                                        ColorConsole.WriteLine("Archivage destination réussie", Color.Green);
-                                                    }
-                                                    else
-                                                    {
-                                                        ColorConsole.WriteLine("Erreur : Archivage destination", Color.Red);
-                                                    }
-
-                                                }
-                                                else
-                                                {
-                                                    ColorConsole.WriteLine("Erreur : Archivage source ", Color.Red);
-                                                }
-
-                                            }
-                                            else
-                                            {
-                                                ColorConsole.WriteLine("Erreur mise à jour des pieces ", Color.Red);
-                                                ColorConsole.WriteLine("Pas d'archivage", Color.Red);
-                                            }
-
+                                            CopierPieces(idLastVue, dossier, namedossier, livrableDossierRelPath, idDossier, pathAndBarcode);
                                         }
-
                                     }
                                     else
                                     {
                                         WriteLine("Creation du dossier sur la BD");
                                         getPathAndBarCode(dossier.FullName, out var pathAndBarcode);
-                                        string chemindossier = (destination + ("/"
-                                                    + (namedossier + "/")));
+                                        string chemindossier = Path.Combine(destination, namedossier);
                                         if (insertDossier(idlivrable, pathAndBarcode.Count, namedossier, chemindossier, 2, user_scan, date_scan))
                                         {
                                             idDossier = verifierExistanceDuDossier(namedossier);
-                                            WriteLine(("ID dossier : " + idDossier));
+                                            WriteLine("ID dossier : " + idDossier);
                                             insertPieces(idDossier, pathAndBarcode, namedossier);
-                                            var idAndBarcode = getIDandBarcodeofTF(idDossier);
-                                            var updateFolder = true;
-                                            for (int i = 0; i < pathAndBarcode.Count; i++)
-                                            {
-                                                var indexes = pathAndBarcode[i].Split(";");
-                                                var barcode = indexes[0];
-                                                var imageSource = indexes[1];
-                                                var id_vue = idAndBarcode[barcode];
-                                                if (!setodre(id_vue, idLastVue))
-                                                {
-                                                    updateFolder = false;
-                                                    break;
-                                                }
-                                                var imageDestination = Path.Combine(destination, namedossier, Path.ChangeExtension(imageSource, ".tif"));
-                                                File.Copy(imageSource, imageDestination);
-                                                idLastVue = id_vue;
-                                            }
-
-                                            if (updateFolder)
-                                            {
-                                                ColorConsole.WriteLine("mise a jour des pieces reussite", Color.Green);
-                                                WriteLine("commencement d'archivage source ");
-                                                if (deplacerCartonErreur(dossier.FullName, Path.Combine(cheminArchiveSource, livrableDossierRelPath)))
-                                                {
-                                                    ColorConsole.WriteLine("Archivage source reussie", Color.Green);
-                                                    WriteLine("Commencement d'archivage destination ");
-                                                    string cheminCartonDestination = Path.Combine(destination, namedossier);
-                                                    if (CopieCarton(cheminCartonDestination, Path.Combine(cheminArchiveDestination, site.Name, scan.Name)))
-                                                    {
-                                                        ColorConsole.WriteLine("Archivage destination reussie", Color.Green);
-                                                    }
-                                                    else
-                                                    {
-                                                        ColorConsole.WriteLine("Erreur : Archivage destination", Color.Red);
-                                                    }
-                                                }
-                                                else
-                                                {
-                                                    ColorConsole.WriteLine("Erreur : Archivage source ", Color.Red);
-                                                }
-                                            }
-                                            else
-                                            {
-                                                ColorConsole.WriteLine("erreur mise a jour des pieces ", Color.Red);
-                                                ColorConsole.WriteLine("pas d'archivage", Color.Red);
-                                            }
+                                            CopierPieces(idLastVue, dossier, namedossier, livrableDossierRelPath, idDossier, pathAndBarcode);
                                         }
                                         else
                                         {
@@ -235,6 +142,60 @@ namespace Injection_Dossiers_CADASTRE
                         ColorConsole.WriteLine("Erreur : attention le chemin source spicifié n'est pas correct", Color.Red);
                     }
                 }                
+            }
+        }
+
+        private static void CopierPieces(int idLastVue, DirectoryInfo dossier, string namedossier, string livrableDossierRelPath, int idDossier, Dictionary<int, string> pathAndBarcode)
+        {
+            var idAndBarcode = getIDandBarcodeofTF(idDossier);
+            var updateFolder = true;
+            for (int i = 0; i < pathAndBarcode.Count; i++)
+            {
+                //string id = Integer.toString(i);
+                var indexes = pathAndBarcode[i].Split(";");
+                var barcode = indexes[0];
+                var imageSource = indexes[1];
+                var id_vue = idAndBarcode[barcode];
+                if (!setodre(id_vue, idLastVue))
+                {
+                    updateFolder = false;
+                    break;
+                }
+                var dirDest = Path.Combine(destination, namedossier);
+                var imageDestination = Path.Combine(dirDest, barcode + ".tif");
+                if (!Directory.Exists(dirDest)) Directory.CreateDirectory(dirDest);
+                File.Copy(imageSource, imageDestination);
+                idLastVue = id_vue;
+            }
+
+            if (updateFolder)
+            {
+                ColorConsole.WriteLine("Mise à jour des pièces réussite", Color.Green);
+                WriteLine("Commencement d'archivage source ");
+
+                if (deplacerCartonErreur(dossier.FullName, Path.Combine(cheminArchiveSource, livrableDossierRelPath)))
+                {
+                    ColorConsole.WriteLine("Archivage source réussie", Color.Green);
+                    WriteLine("Commencement d'archivage destination ");
+                    string cheminCartonDestination = Path.Combine(destination, namedossier);
+                    if (CopieCarton(cheminCartonDestination, Path.Combine(cheminArchiveDestination, livrableDossierRelPath)))
+                    {
+                        ColorConsole.WriteLine("Archivage destination réussie", Color.Green);
+                    }
+                    else
+                    {
+                        ColorConsole.WriteLine("Erreur : Archivage destination", Color.Red);
+                    }
+                }
+                else
+                {
+                    ColorConsole.WriteLine("Erreur : Archivage source ", Color.Red);
+                }
+            }
+            else
+            {
+                ColorConsole.WriteLine("Erreur mise à jour des pieces ", Color.Red);
+                ColorConsole.WriteLine("Pas d'archivage", Color.Red);
             }
         }
 
@@ -258,7 +219,7 @@ namespace Injection_Dossiers_CADASTRE
             string requette = "SELECT ISNULL(MAX(id_vue), 0) as max FROM dbo.TB_Vues";
             try
             {
-                new Helper().ExecuteQuery(requette, QueryType.Read, out DataTable dt);
+                Helper.ExecuteQuery(requette, QueryType.Read, out DataTable dt);
                 var valPath = dt.Rows[0]["max"].ToString();
                 
                 if (valPath == null)
@@ -286,7 +247,7 @@ namespace Injection_Dossiers_CADASTRE
             var requette = $"UPDATE [dbo].[TB_Vues] SET [id_status]=1,[numero_ordre]={valueOrdre} where id_vue={idVue}";
             try
             {
-                new Helper().ExecuteQuery(requette, QueryType.CUD, out var _);
+                Helper.ExecuteQuery(requette, QueryType.CUD, out var _);
 
             }
             catch (Exception e)
@@ -304,12 +265,14 @@ namespace Injection_Dossiers_CADASTRE
             string requette = ("SELECT [id_vue] ,[bar_code] as num FROM [dbo].[TB_Vues] where id_dossier=" + idTF);
             try
             {
-                new Helper().ExecuteQuery(requette, QueryType.Read, out DataTable dt);
-                
-                    var id_vue = (int)dt.Rows[0]["id_vue"];
-                    var bar_code = dt.Rows[0]["num"].ToString();
+                Helper.ExecuteQuery(requette, QueryType.Read, out DataTable dt);
+
+                foreach (DataRow row in dt.Rows)
+                {
+                    var id_vue = (int)row["id_vue"];
+                    var bar_code = row["num"].ToString();
                     idAndBarcode.Add(bar_code.Trim(), id_vue);
-                
+                }  
             }
             catch (Exception e)
             {
@@ -326,7 +289,7 @@ namespace Injection_Dossiers_CADASTRE
             string requette = ("SELECT COUNT(*)as num FROM [dbo].[TB_Vues] where id_dossier=" + idDossier);
             try
             {
-                new Helper().ExecuteQuery(requette, QueryType.Read, out DataTable dt);
+                Helper.ExecuteQuery(requette, QueryType.Read, out DataTable dt);
                     
                 var nbrBds = (int)dt.Rows[0]["num"];
                 condition = nbrBds != 0;
@@ -341,43 +304,38 @@ namespace Injection_Dossiers_CADASTRE
         }
 
         public static int verifierExistanceDuDossier(string nameDossier)
-        {
-            int idDossier = 0;
-            string requette = ("SELECT [id_dossier] FROM [dbo].[TB_Dossier] where name_dossier='"
-                        + (nameDossier + "'"));
+        {  
             try
             {
-                new Helper().ExecuteQuery(requette, QueryType.Read, out DataTable dt);
-                idDossier = (int)dt.Rows[0]["id_dossier"];
+                int idDossier = 0;
+                string requette = $"SELECT [id_dossier] FROM [dbo].[TB_Dossier] where name_dossier='{nameDossier}'";
+                Helper.ExecuteQuery(requette, QueryType.Read, out DataTable dt);
+                idDossier = dt.Rows.Count == 0 ? 0 : (int)dt.Rows[0]["id_dossier"];
+                return idDossier;
             }
             catch (Exception e)
             {
                 ColorConsole.WriteLine(e.ToString(), Color.Red);
                 return 0;
-            }
-
-            return idDossier;
+            }   
         }
 
         public static int verifierExistanceDulivrable(string nameLivrable)
-        {
-            int idLivrable = 0;
-            string requette = ("SELECT [id_livrable] FROM [dbo].[TB_Livrable] where nom_livrable='"
-                        + (nameLivrable + "'"));
+        {  
             try
             {
-                new Helper().ExecuteQuery(requette, QueryType.Read, out DataTable dt);
+                int idLivrable = 0;
+                string requette = $"SELECT [id_livrable] FROM [dbo].[TB_Livrable] where nom_livrable='{nameLivrable}'";
+                Helper.ExecuteQuery(requette, QueryType.Read, out DataTable dt);
 
                 idLivrable = dt.Rows.Count == 0 ? 0 : (int)dt.Rows[0]["id_livrable"];
-
+                return idLivrable;
             }
             catch (Exception e)
             {
                 ColorConsole.WriteLine(e.ToString(), Color.Red);
                 return 0;
             }
-
-            return idLivrable;
         }
         //inserer dossier
         public static bool insertDossier(int iDlivrable, int nbrImages, string nameDossier, string cheminDossier, int userIndex, string user_scan, string date_scan)
@@ -394,7 +352,7 @@ namespace Injection_Dossiers_CADASTRE
                         + (user_scan + "')"))))))))))))));
             try
             {
-                new Helper().ExecuteQuery(requette, QueryType.CUD, out DataTable _);
+                Helper.ExecuteQuery(requette, QueryType.CUD, out DataTable _);
 
             }
             catch (Exception e)
@@ -415,7 +373,7 @@ namespace Injection_Dossiers_CADASTRE
                         + (nameLivrable + "',0)"))));
             try
             {
-                new Helper().ExecuteQuery(requette, QueryType.CUD, out DataTable _);
+                Helper.ExecuteQuery(requette, QueryType.CUD, out DataTable _);
 
             }
             catch (Exception e)
@@ -430,7 +388,7 @@ namespace Injection_Dossiers_CADASTRE
         public static void getPathAndBarCode(string cartonPath ,out Dictionary<int, string> dictioPathAndBarcode)
         {
             dictioPathAndBarcode = new Dictionary<int, string>();
-            string pathDocOrder = Path.Combine(cartonPath , "Doc_Order.TXT");
+            string pathDocOrder = Path.Combine(cartonPath , "Doc_Order.txt");
             var lines = File.ReadAllLines(pathDocOrder);
             var i = 0;
             foreach (var piece in lines)
@@ -439,13 +397,13 @@ namespace Injection_Dossiers_CADASTRE
                 //var pathCommands = Path.Combine(cartonPath, $"{piece}", "COMMANDS");
                 var barcode = piece;
                 dictioPathAndBarcode.Add(i, $"{barcode};{path1pg}");
+                i++;
             }
         }
         //insertion des pièces
         public static bool insertPieces(int idDossier, Dictionary<int, string> pathAndBarcode, string namedossier)
         {
             var condition = true;
-            string requette = "";
             int count = 0;
             for (int i = 0; (i < pathAndBarcode.Count); i++)
             {
@@ -453,11 +411,11 @@ namespace Injection_Dossiers_CADASTRE
                 var indexes = pathAndBarcode[i].Split(";");
                 var chemin = Path.Combine(destination, namedossier, $"{indexes[0]}.tif");
 
-                requette = $"('{indexes[0]}',{idDossier},'{chemin}')";
+                var requette = $"('{indexes[0]}',{idDossier},'{chemin}')";
                 var requettefinal = $"INSERT INTO [dbo].[TB_Vues] ([bar_code],[id_dossier],[url]) VALUES {requette}";
                 try
                 {
-                    new Helper().ExecuteQuery(requette, QueryType.CUD, out DataTable _);
+                    Helper.ExecuteQuery(requettefinal, QueryType.CUD, out DataTable _);
 
                 }
                 catch (Exception e)
@@ -468,7 +426,6 @@ namespace Injection_Dossiers_CADASTRE
 
                 requette = "";
             }
-
             return condition;
         }
 
@@ -489,7 +446,8 @@ namespace Injection_Dossiers_CADASTRE
 
             }
 
-            var to = Path.Combine(cheminErreur, Site_Ancfcc, Scan_Ancfcc);
+            var errorPath = Path.Combine(cheminErreur, Site_Ancfcc, Scan_Ancfcc);
+            var error = "";
             if (FileInfoDoc_Order)
             {
                 
@@ -497,24 +455,30 @@ namespace Injection_Dossiers_CADASTRE
                 {
                     if (!verifierExistanceDesPieces(cheminDocOrder))
                     {
-                        to = Path.Combine(to, "PieceNonExistant");
+                        error = "PieceNonExistant";
                         condition = false;
                     }
 
                 }
                 else
                 {
-                    to = Path.Combine(to, "DossierFileInfoNonExistant");
+                    error = "DossierFileNonExistant";
                     condition = false;
                 }
 
             }
             else
             {
-                to = Path.Combine(to, "AbsenceDocOrder");
+                error = "AbsenceDocOrder";
                 condition = false;
             }
-            deplacerCartonErreur(cartonPath, to);
+            if (!condition)
+            {
+                ColorConsole.WriteLine(error, Color.Red);
+                WriteLine("Déplacement ...");
+                deplacerCartonErreur(cartonPath, Path.Combine(errorPath, error));
+            }
+
             return condition;
         }
 
@@ -552,6 +516,10 @@ namespace Injection_Dossiers_CADASTRE
             }
 
             DirectoryInfo folderErreurCarton = new DirectoryInfo(Path.Combine(folderErreur.FullName, carton.Name));
+            if (!folderErreurCarton.Exists)
+            {
+                folderErreurCarton.Create();
+            }
             try
             {
                 Microsoft.VisualBasic.FileIO.FileSystem.CopyDirectory(carton.FullName, folderErreurCarton.FullName);
@@ -600,9 +568,10 @@ namespace Injection_Dossiers_CADASTRE
 
             foreach (var piece in listePieceInDossier)
             {
-                var pieceImgPath = new DirectoryInfo(Path.Combine(
+                var pieceImgPath = new FileInfo(Path.Combine(
                         Path.GetDirectoryName(pathDocOrder), piece, "1.pg"
                     ));
+
                 if (!pieceImgPath.Exists)
                 {
                     condition = false;

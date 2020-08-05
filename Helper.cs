@@ -10,6 +10,7 @@ using System.Data.SqlClient;
 using System.Drawing;
 using Newtonsoft.Json.Linq;
 using System.IO;
+using Colorful;
 
 namespace Injection_Dossiers_CADASTRE
 {
@@ -23,7 +24,7 @@ namespace Injection_Dossiers_CADASTRE
     }
     public class Helper
     {
-        public IConfiguration config { get; set; }
+        public static IConfiguration config { get; set; }
         public List<Site> Sites { get; set; }
 
         public static Site selectedSite;
@@ -43,13 +44,15 @@ namespace Injection_Dossiers_CADASTRE
         public void Menu()
         {
             var selected = false;
+            ColorAlternatorFactory alternatorFactory = new ColorAlternatorFactory();
+            ColorAlternator alternator = alternatorFactory.GetAlternator(1, Color.Plum, Color.PaleVioletRed);
             do
             {
                 Clear();
                 WriteLine("Choisir un site :");
                 foreach(var site in Sites)
                 {
-                    WriteLine($"\t {site.id} - {site.Nom}");
+                    ColorConsole.WriteLineAlternating($"\t {site.id} - {site.Nom}",alternator);
                 }
                 WriteLine($"\t 0 - Quitter");
                 Write("entrer le numéro : ");
@@ -76,31 +79,30 @@ namespace Injection_Dossiers_CADASTRE
             } while (!selected);
         }
 
-        public void ExecuteQuery(string query,QueryType queryType ,out DataTable dt)
+        public static void ExecuteQuery(string query,QueryType queryType ,out DataTable dt)
         {
             dt = new DataTable();
-            try
+
+            var conStr = config.GetConnectionString("Storage").Replace("@database", selectedSite.DB);
+            using (var con = new SqlConnection(conStr))
             {
-                var conStr = config.GetConnectionString("Storage").Replace("@database", selectedSite.DB);
-                using (var con = new SqlConnection(conStr))
+                con.Open();
+                var cmd = new SqlCommand()
                 {
-                    con.Open();
-                    switch (queryType)
-                    {
-                        case QueryType.Read:
-                            var da = new SqlDataAdapter(query, con);
-                            da.Fill(dt);
-                            break;
-                        case QueryType.CUD:
-                            new SqlCommand(query, con).ExecuteNonQuery();
-                            break;
-                    }
+                    CommandText = query,
+                    CommandTimeout = 0,
+                    Connection = con
+                };
+                switch (queryType)
+                {
+                    case QueryType.Read:
+                        var da = new SqlDataAdapter(cmd);
+                        da.Fill(dt);
+                        break;
+                    case QueryType.CUD:
+                        cmd.ExecuteNonQuery();
+                        break;
                 }
-            }
-            catch (Exception ex)
-            {
-                ColorConsole.WriteLine(ex.ToString(), Color.Red);
-                Environment.Exit(0);
             }
         }
     }
